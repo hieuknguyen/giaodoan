@@ -210,6 +210,10 @@ fun LoginScreen(navController: NavController) {
                                     }
                                 }
                             }
+                            else{
+                                Toast.makeText(context,"Tên đăng nhập hoặc mật khẩu không đúng!",
+                                    Toast.LENGTH_LONG).show()
+                            }
                         },
                     modifier = Modifier
                         .fillMaxWidth()
