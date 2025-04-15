@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="imgFood" type="id" />
+    <item name="tvFoodName" type="id" />
+    <item name="tvFoodPrice" type="id" />
+    <item name="btnDecrease" type="id" />
+    <item name="tvQuantity" type="id" />
+    <item name="btnIncrease" type="id" />
+    <item name="btnOrder" type="id" />
+    <item name="cart" type="id" />
+</resources>

@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">GiaoDoAn</string>
+    <string name="cart">cart</string>
+    <string name="chat">chat</string>
+    <string name="food">food</string>
+    <string name="gi_h_ng">Giỏ hàng</string>
+    <string name="todo">TODO</string>
+    <string name="human" />
+
+
+</resources>
