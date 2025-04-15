@@ -24,6 +24,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String TABLE_CATEGORY = "categories";
     public static final String TABLE_PRODUCT = "product";
     public static final String TABLE_CARTS = "carts";
+    public static final String TABLE_PURCHASED_PRODUCTS = "purchased_products";
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -76,6 +77,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 "FOREIGN KEY (category_id) REFERENCES categories(category_id),"+
                 "FOREIGN KEY (product_id) REFERENCES product(id))";
         db.execSQL(create_cart_table);
+        String create_purchased_products_table = "CREATE TABLE purchased_products (" +
+                "purchased_products_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "product_id INTEGER NOT NULL, " +
+                "user_id INTEGER NOT NULL, "+
+                "ten TEXT NOT NULL, " +
+                "purchased_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "total_amount  INTEGER NOT NULL, " +
+                "price REAL NOT NULL, " +
+                "rating FLOAT DEFAULT 0, " +
+                "review TEXT, " +
+                "review_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "has_review INTEGER DEFAULT 0," +
+                "FOREIGN KEY (user_id) REFERENCES users(user_id),"+
+                "FOREIGN KEY (product_id) REFERENCES product(id))";
+
+        db.execSQL(create_purchased_products_table);
     }
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -83,6 +100,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_CATEGORY);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_PRODUCT);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_CARTS);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_PURCHASED_PRODUCTS);
+
         onCreate(db);
     }
 

@@ -62,7 +62,7 @@ public class Cart {
         return data;
     }
 
-    public boolean Add_cart(Integer user_id, Integer product_id, Integer Category_id) {
+    public boolean Add_cart(Integer user_id, Integer product_id, Integer Category_id,Integer quantity) {
         database = dbHelper.getReadableDatabase();
         @SuppressLint("Recycle") Cursor cursor = database.query(
                 DatabaseHelper.TABLE_CARTS,
@@ -73,14 +73,10 @@ public class Cart {
         );
         if (cursor.moveToFirst()) {
             try {
-
                 String cart_id = cursor.getString(0);
-                int currentQuantity = cursor.getInt(4);
-                Log.d("CartDebug", String.valueOf(currentQuantity));
-
                 database = dbHelper.getWritableDatabase();
                 ContentValues values = new ContentValues();
-                values.put("total_amount", currentQuantity + 1);
+                values.put("total_amount", quantity);
                 values.put("updated_at", System.currentTimeMillis()); // Cập nhật thời gian
 
                 String whereClause = "cart_id = ?";
@@ -99,7 +95,7 @@ public class Cart {
             values.put("user_id", user_id);
             values.put("product_id", product_id);
             values.put("category_id", Category_id);
-            values.put("total_amount", 1);
+            values.put("total_amount", quantity);
             long newRowId = database.insert(DatabaseHelper.TABLE_CARTS, null, values);
             database.close();
             return newRowId != -1;

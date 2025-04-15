@@ -1,6 +1,7 @@
 package com.example.giaodoan.ui
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -44,15 +45,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import androidx.navigation.NavController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.giaodoan.database.DatabaseHelper
 import com.example.giaodoan.model.SessionManager
+import com.google.gson.Gson
 
 class login : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             val loginModel = User(this)
-            loginModel.register("Hieuknguye","hieu@gmail.com","123","Admin")
+            loginModel.register("hieuknguyen","hieu@gmail.com","123","Admin")
 //            DatabaseHelper(this).deleteDatabase(this)
             TodoNavigation()
         }
@@ -69,13 +73,14 @@ class SharedViewModel : ViewModel() {
 fun TodoNavigation() {
     val navController = rememberNavController()
     val sharedViewModel: SharedViewModel = viewModel()
+    val context = LocalContext.current
     NavHost(
         navController = navController,
         startDestination = "login"
     ) {
         composable("Login") {
             if(SessionManager.getInstance(LocalContext.current).isLoggedIn() && SessionManager.getInstance(LocalContext.current).getRole() == "User"){
-                navController.navigate("home") {
+                navController.navigate("danhSachMonAn") {
                     popUpTo(navController.graph.startDestinationId) { inclusive = true }
                 }
             }else if(SessionManager.getInstance(LocalContext.current).isLoggedIn() && SessionManager.getInstance(LocalContext.current).isAdmin){
@@ -92,7 +97,7 @@ fun TodoNavigation() {
         }
         composable("cart") {
 
-            GioHangScreenByCategory()
+            GioHangScreenByCategory(navController)
         }
         composable("profile") {
             UserProfileScreen(navController)
@@ -119,6 +124,29 @@ fun TodoNavigation() {
             }
 
             }
+        composable( route = "ManHinhChiTietMonAn/{product}",arguments = listOf(navArgument("product") {
+            type = NavType.StringType
+        })){
+                backStackEntry ->
+            val productJson = backStackEntry.arguments?.getString("product") ?: ""
+            val product = Gson().fromJson(productJson, ProductDisplay::class.java)
+            Log.e("check", product.toString())
+            ManHinhChiTietMonAn(navController,product)
+        }
+        composable(route="Payment/{totalPrice}",
+            arguments = listOf(navArgument("totalPrice") {
+                type = NavType.StringType
+            })
+            ){
+                backStackEntry ->
+            val totalPriceJson = backStackEntry.arguments?.getString("totalPrice") ?: ""
+            val totalPrice = Gson().fromJson(totalPriceJson, String::class.java)
+            PaymentOptionScreen(totalPrice, context, navController)
+        }
+        composable("rate") {
+            review()
+        }
+
     }
 }
 
@@ -209,6 +237,10 @@ fun LoginScreen(navController: NavController) {
                                         popUpTo(navController.graph.startDestinationId) { inclusive = true }
                                     }
                                 }
+                            }
+                            else{
+                                Toast.makeText(context,"Tên đăng nhập hoặc mật khẩu không đúng!",
+                                    Toast.LENGTH_LONG).show()
                             }
                         },
                     modifier = Modifier

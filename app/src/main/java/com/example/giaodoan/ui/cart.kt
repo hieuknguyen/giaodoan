@@ -1,5 +1,6 @@
 package com.example.giaodoan.ui
 
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -50,9 +51,11 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.giaodoan.R
 import com.example.giaodoan.model.Cart
 import com.example.giaodoan.model.SessionManager
+import com.google.gson.Gson
 
 data class CartItem(
     val cart_id: Int,
@@ -65,7 +68,7 @@ data class CartItem(
 )
 
 @Composable
-fun GioHangScreenByCategory() {
+fun GioHangScreenByCategory(navicontroler: NavController) {
     val context = LocalContext.current
     val sessionManager = remember { SessionManager.getInstance(context) }
     val cartModel = remember { Cart(context) }
@@ -157,7 +160,10 @@ fun GioHangScreenByCategory() {
 
             Spacer(modifier = Modifier.height(10.dp))
             Button(
-                onClick = { /* Xử lý đặt hàng */ },
+
+                onClick = {
+                    val totalPrice = Uri.encode(Gson().toJson(totalPrice))
+                    navicontroler.navigate("Payment/$totalPrice") },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
@@ -259,7 +265,8 @@ fun CartItemRow(item: CartItem, loadCartData: () -> Unit) {
                         .fillMaxHeight()
                         .clickable{
                             val add_cart = Cart(context)
-                            if(add_cart.Add_cart(SessionManager.getInstance(context).getUserId(),item.product_id, item.category_id)){
+
+                            if(add_cart.Add_cart(SessionManager.getInstance(context).getUserId(),item.product_id, item.category_id,item.total_amount+1)){
                                 textValue = (textValue.toInt() +1).toString()
                                 loadCartData()
                             }

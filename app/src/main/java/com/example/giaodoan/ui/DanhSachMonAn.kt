@@ -40,6 +40,7 @@ import com.example.giaodoan.model.Cart
 import com.example.giaodoan.model.Category
 import com.example.giaodoan.model.Product
 import com.example.giaodoan.model.SessionManager
+import com.google.gson.Gson
 
 @Composable
 fun formatPrice(price: Long): String {
@@ -51,7 +52,7 @@ fun formatPrice(price: Long): String {
 }
 
 @Composable
-fun TopSearchBar(navController: NavController) {
+fun TopSearchBar(navController: NavController, onSearchQueryChanged: (String) -> Unit) {
     var searchText by remember { mutableStateOf("") }
     var isSearchFocused by remember { mutableStateOf(false) }
 
@@ -68,11 +69,13 @@ fun TopSearchBar(navController: NavController) {
                 .padding(start = 8.dp)
                 .width(365.dp - 48.dp)
                 .height(59.dp)
-
         ) {
             TextField(
                 value = searchText,
-                onValueChange = { searchText = it },
+                onValueChange = { newText ->
+                    searchText = newText
+                    onSearchQueryChanged(newText)
+                },
                 placeholder = {
                     Text(
                         text = "Tìm kiếm...",
@@ -106,7 +109,7 @@ fun TopSearchBar(navController: NavController) {
                 .size(40.dp)
                 .align(Alignment.CenterEnd)
                 .padding(end = 16.dp)
-                .clickable{
+                .clickable {
                     navController.navigate("profile")
                 }
         )
@@ -115,20 +118,27 @@ fun TopSearchBar(navController: NavController) {
 
 @Composable
 fun DanhSachMonAn(navController: NavController) {
+    var searchQuery by remember { mutableStateOf("") }
+
     Scaffold(
         topBar = {
-            TopSearchBar(navController)
+            TopSearchBar(
+                navController = navController,
+                onSearchQueryChanged = { query ->
+                    searchQuery = query
+                }
+            )
         },
         bottomBar = {
             BottomNavigationBar(navController)
         }
     ) { paddingValues ->
-        DanhSachMonAnContent(paddingValues)
+        DanhSachMonAnContent(paddingValues, searchQuery, navController)
     }
 }
 
 @Composable
-fun DanhSachMonAnContent(paddingValues: PaddingValues) {
+fun DanhSachMonAnContent(paddingValues: PaddingValues, searchQuery: String = "", navController: NavController) {
     val context = LocalContext.current
 
     val categoryModel = Category(context)
@@ -137,7 +147,7 @@ fun DanhSachMonAnContent(paddingValues: PaddingValues) {
         CategoryDisplay(
             name = it.category_name.toString(),
             description = it.getDescription(),
-            id =it.getCategory_id()
+            id = it.getCategory_id()
         )
     }
 
@@ -153,7 +163,17 @@ fun DanhSachMonAnContent(paddingValues: PaddingValues) {
         )
     }
 
-    val danhSachDanhMuc = productList.map { it.category_name }.distinct()
+    // Filter products based on search query
+    val filteredProductList = if (searchQuery.isEmpty()) {
+        productList
+    } else {
+        productList.filter {
+            it.product_name.contains(searchQuery, ignoreCase = true) ||
+                    it.category_name.contains(searchQuery, ignoreCase = true)
+        }
+    }
+
+    val danhSachDanhMuc = filteredProductList.map { it.category_name }.distinct()
 
     Column(
         modifier = Modifier
@@ -169,27 +189,41 @@ fun DanhSachMonAnContent(paddingValues: PaddingValues) {
                 .fillMaxWidth(),
             textAlign = TextAlign.Center,
         )
-        LazyColumn {
-            danhSachDanhMuc.forEach { category ->
-                item {
-                    Text(
-                        text = category.uppercase(),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = Color(0xFF4CAF50),
-                        modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
-                    )
-                }
 
-                val monAnTheoDanhMuc = productList.filter { it.category_name == category }
+        if (filteredProductList.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Không tìm thấy sản phẩm",
+                    fontSize = 16.sp,
+                    color = Color.Gray
+                )
+            }
+        } else {
+            LazyColumn {
+                danhSachDanhMuc.forEach { category ->
+                    item {
+                        Text(
+                            text = category.uppercase(),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = Color(0xFF4CAF50),
+                            modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
+                        )
+                    }
 
-                item {
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 8.dp),
-                        modifier = Modifier.height(220.dp)
-                    ) {
-                        items(monAnTheoDanhMuc) { product ->
-                            ItemMonAn(product = product, onClick = {  })
+                    val monAnTheoDanhMuc = filteredProductList.filter { it.category_name == category }
+
+                    item {
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 8.dp),
+                            modifier = Modifier.height(220.dp)
+                        ) {
+                            items(monAnTheoDanhMuc) { product ->
+                                ItemMonAn(product = product, onClick = { },  navController)
+                            }
                         }
                     }
                 }
@@ -201,7 +235,7 @@ fun DanhSachMonAnContent(paddingValues: PaddingValues) {
 
 
 @Composable
-fun ItemMonAn(product: ProductDisplay, onClick: () -> Unit) {
+fun ItemMonAn(product: ProductDisplay, onClick: () -> Unit, navController: NavController) {
     val imageUri = remember(product.img) {
         if (product.img.isNotEmpty()) {
             try {
@@ -222,11 +256,14 @@ fun ItemMonAn(product: ProductDisplay, onClick: () -> Unit) {
             .background(Color.White)
             .padding(8.dp)
             .clickable{
-                val addcart = Cart(context)
-                if(addcart.Add_cart(SessionManager.getInstance(context).getUserId(),product.product_id,product.category_id)){
-                    Toast.makeText(context, "Đã thêmm sản phẩm vào giỏ hàng", Toast.LENGTH_LONG).show()
-
-                }
+                val productJson = Uri.encode(Gson().toJson(product))
+                navController.navigate("ManHinhChiTietMonAn/$productJson")
+//                navController.navigate("cart")
+//                val addcart = Cart(context)
+//                if(addcart.Add_cart(SessionManager.getInstance(context).getUserId(),product.product_id,product.category_id)){
+//                    Toast.makeText(context, "Đã thêmm sản phẩm vào giỏ hàng", Toast.LENGTH_LONG).show()
+//
+//                }
 
             },
         horizontalAlignment = Alignment.CenterHorizontally
@@ -308,6 +345,26 @@ fun BottomNavigationBar(navController: NavController) {
                 textAlign = TextAlign.Center
             )
         }
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .weight(1f)
+                .clickable{
+                    navController.navigate("rate")
+                },
+
+            ) {
+            Icon(
+                painter = painterResource(id = R.drawable.rate),
+                contentDescription = "rate",
+                modifier = Modifier.size(40.dp)
+            )
+            Text(
+                text = "rate",
+                fontSize = 20.sp,
+                textAlign = TextAlign.Center
+            )
+        }
 
 
         Column(
@@ -331,4 +388,3 @@ fun BottomNavigationBar(navController: NavController) {
         }
     }
 }
-
