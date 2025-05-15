@@ -210,7 +210,6 @@ fun register(sharedViewModel: SharedViewModel, navController: NavController) {
                             scope.launch {
                                 otpCode = (100000..999999).random().toString()
                                 sen_code().getGroupApi(email, otpCode)
-                                Toast.makeText(context,otpCode.toString(), Toast.LENGTH_SHORT).show()
                                 showQrDialog = true
 
                             }
